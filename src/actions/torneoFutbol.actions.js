@@ -10,8 +10,18 @@ const crearTorneoFutbol = async (param) => {
 
 }
 
+const obtenerTorneoFutbol = async () => {
+
+    const response = await services.ObtenerTorneos();
+
+    return {
+        payload: response
+    }
+}
+
 export const torneoFutbolActions = {
 
-    crearTorneoFutbol
+    crearTorneoFutbol,
+    obtenerTorneoFutbol
 
 }

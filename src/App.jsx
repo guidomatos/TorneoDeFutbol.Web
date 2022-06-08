@@ -1,15 +1,16 @@
 import React from "react";
-import { CrearEquipoPage } from "./pages/mantEquipo/CrearEquipoPage";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { CrearTorneoPage } from "./pages/mantTorneo/CrearTorneoPage";
 
+import { CrearTorneoProgPage } from '../src/pages/gestionTorneoProg/CrearTorneoProgPage';
+import { CrearEquipo } from "./services/equipoFutbol.service";
 
 function App() {
 
 
   return (
 
-    <CrearTorneoPage />
+    <CrearTorneoProgPage />
+
   )
 }
 
