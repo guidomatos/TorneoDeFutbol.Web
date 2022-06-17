@@ -1,33 +1,30 @@
 import React, { useState, useEffect } from "react";
-
-import { equipoFutbolActions } from "../../actions/equipoFutbol.actions";
-
 import { Form, Row, Col, Button } from "react-bootstrap";
-
-
-
-
 import { useForm } from "../../hooks/useForm";
 import { torneoFutbolActions } from "../../actions/torneoFutbol.actions";
 import { torneoEquipoFutbolActions } from "../../actions/torneoEquipoFutbol.actions";
+import { torneoProgramacionFutbolActions } from "../../actions/torneoProgramacionFutbol.actions";
 
 import { EquipoList } from "../../components/EquipoList";
-
+import { TableRB } from '../../components/controls/TableRB' ;
 
 export const CrearTorneoProgPage = () => {
 
 
-    const { values, setvalues, handleInputChange } = useForm({
-
-        nombre: "",
-        codigoPais: ""
+    const { values: formTorneo, setvalues: setFormTorneo, handleInputChange } = useForm({
+        
+        formTorneoId: 0,
+        formTorneoProgramacionId: 0,
+        formEquipoId1: 0,
+        formEquipoId2: 0
 
     });
 
-    const { nombre, codigoPais } = values;
-
     const [listaTorneo, setlistaTorneo] = useState([]);
     const [listaEquipo, setlistaEquipo] = useState([]);
+    const [listaProgramacion, setlistaProgramacion] = useState([]) ;
+
+    const [listaEnfrentamiento, setlistaEnfrentamiento] = useState([]) ;
 
     useEffect(() => {
 
@@ -47,25 +44,6 @@ export const CrearTorneoProgPage = () => {
     }, [])
 
 
-    useEffect(() => {
-
-        console.log('listaTorneo', listaTorneo);
-
-    }, [listaTorneo])
-
-
-    const Grabar = async () => {
-
-        // const requestGrabar = {
-        //     Nombre: nombre,
-        //     CodigoPais: codigoPais
-        // };
-
-        // console.log('requestGrabar', requestGrabar);
-        // const responseGrabar = await equipoFutbolActions.crearEquipoFutbol(requestGrabar);
-        // console.log('responseGrabar', responseGrabar);
-
-    }
 
     const seleccionarTorneo = async (e) => {
 
@@ -74,6 +52,28 @@ export const CrearTorneoProgPage = () => {
         const responseEquipo = await torneoEquipoFutbolActions.obtenerEquipoPorTorneo(parseInt(torneoId));
 
         setlistaEquipo(responseEquipo.payload);
+
+        const responseProgramacion = await torneoProgramacionFutbolActions.obtenerProgramacionPorTorneo(parseInt(torneoId));
+
+        setlistaProgramacion(responseProgramacion.payload);
+
+        setFormTorneo({
+            ...formTorneo,
+            formTorneoId: torneoId 
+        });
+
+    }
+
+    const seleccionarFecha = async(e) => {
+
+        const torneoProgramacionId = e.target.value;
+        
+        setFormTorneo({
+            ...formTorneo,
+            formTorneoProgramacionId: torneoProgramacionId 
+        });
+
+        setlistaEnfrentamiento([]);
 
     }
 
@@ -89,78 +89,140 @@ export const CrearTorneoProgPage = () => {
 
     }
 
-    const cargarEquipo = () => {
+    const cargarProgramacion = () => {
 
 
-        return (listaEquipo?.map((item, index) => {
+        return (listaProgramacion?.map((item, index) => {
             return (
-                <option key={index} value={item.equipoId}>{item.nombre}</option>
+                <option key={index} value={item.torneoProgramacionId}>{item.numeroFecha}</option>
             )
         })
         );
 
     }
 
+    const obtenerDataForTable = () => {
+
+        return {
+            Equipo1: parseInt(formTorneo.formEquipoId1),
+            DescEquipo1: listaEquipo.find( x => x.equipoId == formTorneo.formEquipoId1)?.nombre,
+            Equipo2: parseInt(formTorneo.formEquipoId2),
+            DescEquipo2: listaEquipo.find( x => x.equipoId == formTorneo.formEquipoId2)?.nombre,
+        }
+
+    }
+
+    const agregarEnfrentamiento = () => {
+
+
+        const dataEnfrentamiento = obtenerDataForTable() ;
+
+        setlistaEnfrentamiento(prevArray => [...prevArray, dataEnfrentamiento])
+
+    }
+
+    const grabarEnfrentamiento = async () => {
+
+        if (formTorneo.formTorneoId == 0) {
+            alert('Seleccione un Torneo');
+            return false;
+        }
+
+        if (formTorneo.formTorneoProgramacionId == 0) {
+            alert('Seleccione una fecha');
+            return false;
+        }
+
+        if (listaEnfrentamiento.length == 0) {
+
+            alert('Al menos agregue un enfrentamiento');
+            return false;
+
+        }
+
+        const programacionDetalle = listaEnfrentamiento.map( m => {
+            return {
+                Equipo1: m.Equipo1,
+                Equipo2: m.Equipo2,
+                TorneoProgramacion: {
+                    TorneoProgramacionId:parseInt(formTorneo.formTorneoProgramacionId)
+                }
+            }
+        });
+        
+        const requestProgramarFecha = {
+            programacionDetalle : programacionDetalle
+        }
+
+        const response = await torneoProgramacionFutbolActions.programarFecha(requestProgramarFecha);    
+
+        if (response > 0) {
+            alert('se programo la fecha correctamente');
+        } else {
+            alert('error al programar la fecha') ;
+        }
+
+    }
+    
+
     return (
         <Form>
 
-            <Form.Group as={Row} controlId="formTorneo">
+            <Form.Group as={Row} controlId="formTorneoId">
                 <Form.Label column sm="2">
                     Torneo
                 </Form.Label>
                 <Col sm="4">
-                    <Form.Control as="select" name="TorneoId" onChange={seleccionarTorneo} >
+                    <Form.Control as="select" name="formTorneoId" onChange={seleccionarTorneo} >
+                        <option value={0}>-- Seleccione --</option>
                         {cargarTorneo()}
                     </Form.Control>
                 </Col>
             </Form.Group>
 
-            <Form.Group as={Row} controlId="formTorneo">
+            <Form.Group as={Row} controlId="formTorneoProgramacionId">
                 <Form.Label column sm="2">
                     Fecha
                 </Form.Label>
                 <Col sm="4">
-                    <Form.Control as="select" name="TorneoId" onChange={handleInputChange} >
-                        <option value={1}>Fecha 1</option>
-                        <option value={2}>Fecha 2</option>
-                        <option value={3}>Fecha 3</option>
-                        <option value={4}>Fecha 4</option>
-                        <option value={5}>Fecha 5</option>
+                    <Form.Control as="select" name="formTorneoProgramacionId" onChange={seleccionarFecha} >
+                        <option value={0}>-- Seleccione --</option>
+                        {cargarProgramacion()}
                     </Form.Control>
                 </Col>
             </Form.Group>
 
-            <Form.Group as={Row} controlId="formEquipo">
+            <Form.Group as={Row} controlId="formEquipoId1">
                 <Form.Label column sm="2">
                     Equipo 1
                 </Form.Label>
                 <Col sm="4">
-                    {/* <Form.Control as="select" name="EquipoId" onChange={handleInputChange} >
-                        {cargarEquipo()}
-                    </Form.Control> */}
-
-                    <EquipoList data={listaEquipo} ></EquipoList>
+                    
+                    <EquipoList name="formEquipoId1" data={listaEquipo} handleInputChange={handleInputChange}></EquipoList>
 
                 </Col>
             </Form.Group>
 
-            <Form.Group as={Row} controlId="formEquipo">
+            <Form.Group as={Row} controlId="formEquipoId2">
                 <Form.Label column sm="2">
                     Equipo 2
                 </Form.Label>
                 <Col sm="4">
-                    {/* <Form.Control as="select" name="EquipoId" onChange={handleInputChange} >
-                        {cargarEquipo()}
-                    </Form.Control> */}
 
-                    <EquipoList data={listaEquipo} ></EquipoList>
+                    <EquipoList name="formEquipoId2" data={listaEquipo} handleInputChange={handleInputChange}></EquipoList>
 
                 </Col>
             </Form.Group>
 
-            <Button variant="primary" type="button" onClick={Grabar} >
-                Crear
+            <Button variant="info" type="button" onClick={agregarEnfrentamiento} >
+                Agregar
             </Button>
+
+            <Button variant="primary" type="button" onClick={grabarEnfrentamiento} >
+                Grabar
+            </Button>
+
+            <TableRB dataEnfrentamiento ={listaEnfrentamiento || []}></TableRB>
 
         </Form>
     )

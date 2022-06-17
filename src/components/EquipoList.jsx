@@ -1,17 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Form } from "react-bootstrap";
-import { useForm } from "../hooks/useForm";
 
 export const EquipoList = (props) => {
 
-    const { values, setvalues, handleInputChange } = useForm({
-
-
-
-    });
-
-
-    const { data } = props;
+    const { data, name, handleInputChange } = props;
 
 
     const cargarEquipo = () => {
@@ -28,7 +20,8 @@ export const EquipoList = (props) => {
 
     return (
 
-        <Form.Control as="select" name="EquipoId" onChange={handleInputChange} >
+        <Form.Control as="select" name={name} onChange={handleInputChange} >
+            <option value={0}>-- Seleccione --</option>
             {cargarEquipo()}
         </Form.Control>
 
